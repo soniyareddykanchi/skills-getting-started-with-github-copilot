@@ -54,7 +54,47 @@ document.addEventListener("DOMContentLoaded", () => {
           const ul = document.createElement("ul");
           details.participants.forEach((p) => {
             const li = document.createElement("li");
-            li.textContent = p;
+
+            const emailSpan = document.createElement("span");
+            emailSpan.textContent = p;
+            emailSpan.className = "participant-email";
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "delete-btn";
+            deleteBtn.textContent = "✖";
+            deleteBtn.title = "Unregister participant";
+
+            // Delete handler: call unregister endpoint and refresh list
+            deleteBtn.addEventListener("click", async (e) => {
+              e.preventDefault();
+              try {
+                const resp = await fetch(
+                  `/activities/${encodeURIComponent(name)}/participants?email=${encodeURIComponent(p)}`,
+                  { method: "DELETE" }
+                );
+                const result = await resp.json();
+                if (resp.ok) {
+                  messageDiv.textContent = result.message;
+                  messageDiv.className = "success";
+                  // Refresh activities to reflect change
+                  fetchActivities();
+                } else {
+                  messageDiv.textContent = result.detail || "Failed to unregister";
+                  messageDiv.className = "error";
+                }
+                messageDiv.classList.remove("hidden");
+                setTimeout(() => messageDiv.classList.add("hidden"), 5000);
+              } catch (err) {
+                console.error("Error unregistering:", err);
+                messageDiv.textContent = "Failed to unregister. Try again.";
+                messageDiv.className = "error";
+                messageDiv.classList.remove("hidden");
+                setTimeout(() => messageDiv.classList.add("hidden"), 5000);
+              }
+            });
+
+            li.appendChild(emailSpan);
+            li.appendChild(deleteBtn);
             ul.appendChild(li);
           });
           participantsDiv.appendChild(ul);
